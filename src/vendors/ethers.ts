@@ -16,7 +16,7 @@ import { SignatureParams } from '../interfaces'
 import { Biconomy } from '@biconomy/mexa'
 
 import { helpers } from '..'
-import { ERC20Interface, metaTransactionType } from '../constants/payment'
+import { ERC20Interface, SubscriptionDePayInterface, metaTransactionType } from '../constants/payment'
 
 export default class extends Vendor {
   /**
@@ -158,6 +158,17 @@ export default class extends Vendor {
    */
   abiEncodeErc20Functions(f: string, p: Array<any>): string {
     const iface = new ethers.utils.Interface(ERC20Interface)
+    const data = iface.encodeFunctionData(f, p)
+    return data
+  }
+  /**
+   * @remarks
+   * returns abi enocoded erc20 function
+   * @param f - name of function
+   * @param p - function parameters
+   */
+  abiEncodeSubDepayFunctions(f: string, p: Array<any>): string {
+    const iface = new ethers.utils.Interface(SubscriptionDePayInterface)
     const data = iface.encodeFunctionData(f, p)
     return data
   }

@@ -132,6 +132,64 @@ export default class extends Deployed {
     const rsv = this.vendor.getSignatureParameters(signedMessage)
     return await this.sendRawBiconomyERC20Transaction(userAddress, abiEncodedApprove, rsv)
   }
+  /**
+   * @remarks
+   * Gaslles user deposit 
+   * Dont use this function without frontend
+   *
+   * @param a - deposit amount.
+   * @param t - token address.
+   * @param c - chain Id
+   */
+   async gasLessUserDeposit(a: string, t: string, c: number): Promise<TxResponse> {
+    if (!this.vendor.biconomy) throw new Error(INVALID_BICONOMY_KEY)
+
+    const wei = this.vendor.convertToWei(a, this.tokenPrecision || 18)
+    const abiEncodedDeposit = this.vendor.abiEncodeSubDepayFunctions('userDeposit', [
+      t,
+      wei,
+    ])
+    const userAddress = await this.vendor.signer.getAddress()
+    const nonce = await this.getNonceForGaslessERC20(userAddress)
+    const signedMessage = await this.vendor.signedMessageForTx(
+      userAddress,
+      nonce,
+      abiEncodedDeposit,
+      this.subscriptionPaymentContract?.address || '',
+      c,
+    )
+    const rsv = this.vendor.getSignatureParameters(signedMessage)
+    return await this.sendRawBiconomyERC20Transaction(userAddress, abiEncodedDeposit, rsv)
+  }
+  /**
+   * @remarks
+   * Gaslles user deposit 
+   * Dont use this function without frontend
+   *
+   * @param a - withdrawal amount.
+   * @param t - token address.
+   * @param c - chain Id
+   */
+   async gasLessUserWithdraw(a: string, t: string, c: number): Promise<TxResponse> {
+    if (!this.vendor.biconomy) throw new Error(INVALID_BICONOMY_KEY)
+
+    const wei = this.vendor.convertToWei(a, this.tokenPrecision || 18)
+    const abiEncodedWithdraw = this.vendor.abiEncodeSubDepayFunctions('userWithdraw', [
+      t,
+      wei,
+    ])
+    const userAddress = await this.vendor.signer.getAddress()
+    const nonce = await this.getNonceForGaslessERC20(userAddress)
+    const signedMessage = await this.vendor.signedMessageForTx(
+      userAddress,
+      nonce,
+      abiEncodedWithdraw,
+      this.subscriptionPaymentContract?.address || '',
+      c,
+    )
+    const rsv = this.vendor.getSignatureParameters(signedMessage)
+    return await this.sendRawBiconomyERC20Transaction(userAddress, abiEncodedWithdraw, rsv)
+  }
 
   /**
    * @remarks
@@ -163,6 +221,7 @@ export default class extends Deployed {
     const rsv = this.vendor.getSignatureParameters(signedMessage)
     return await this.sendRawBiconomyERC20Transaction(userAddress, abiEncodedApprove, rsv)
   }
+  
   /**
    *
    * @remarks
@@ -190,19 +249,6 @@ export default class extends Deployed {
       })
     }
   }
-
-  /**
-   * @remarks
-   * Get given Allowance amount.
-   *
-   * @param a - address
-   *
-   */
-  async getApprovalAmount(a: string): Promise<any> {
-    const wei = await this.erc20Contract?.functions.allowance(a, this.subscriptionPaymentContract?.address)
-    return this.vendor.convertWeiToEth(wei, this.tokenPrecision || 18)
-  }
-
   /**
    * @remarks
    * Get nonce for gassless transaction on erc20
@@ -216,14 +262,36 @@ export default class extends Deployed {
 
   /**
    * @remarks
-   * Get given Allowance amount.
-   *
-   * @param a - address
-   *
+   * Get given User balance.
+   * @param u - user address
+   * @param t - token address
    */
-  async getUserBalance(a: string): Promise<any> {
-    const wei = await this.erc20Contract?.functions.balanceOf(a)
-    return this.vendor.convertWeiToEth(wei, this.tokenPrecision || 18)
+   async getUserTokenBalance(u: string, t: string): Promise<any> {
+    const wei = await this.subscriptionPaymentContract?.functions.getUserData(u, t)
+    return this.vendor.convertWeiToEth(wei.balance, this.tokenPrecision || 18)
+  }
+
+  /**
+   * @remarks
+   * User deposit to Spheron
+   * @param t - token address
+   * @param a - amount
+  */
+  async userDeposit(t: string, a: string): Promise<TxResponse> {
+    const wei = this.vendor.convertToWei(a, this.tokenPrecision || 18)
+    return await this.subscriptionPaymentContract?.functions.userDeposit(t, wei)
+  }
+
+  /**
+    * @remarks
+    * User withdraw from Spheron
+    * @param t - token address
+    * @param a - amount
+    */
+
+  async userWithdraw(t: string, a: string): Promise<TxResponse> {
+    const wei = this.vendor.convertToWei(a, this.tokenPrecision || 18)
+    return await this.subscriptionPaymentContract?.functions.userWithdraw(t, wei)
   }
   /**
    * @remarks
@@ -313,7 +381,7 @@ export default class extends Deployed {
    * @param d - array of parameters and their values
    * @param t - token address
    */
-  async chargeUser(u: string, d: Array<SubscriptionParameters>, t: string): Promise<TxResponse> {
+  async makeCharge(u: string, d: Array<SubscriptionParameters>, t: string): Promise<TxResponse> {
     const paramArray: Array<string> = []
     const paramValue: Array<number> = []
     for (let i = 0; i < d.length; i++) {
@@ -354,7 +422,7 @@ export default class extends Deployed {
   }
   /**
    * @remarks
-   * this method is used to remove tokens
+   * this method is used to remove tokens from accepted tokens list
    * @param d - array of tokens to remove
    */
   async removeTokens(d: Array<string>): Promise<TxResponse> {
@@ -391,5 +459,65 @@ export default class extends Deployed {
    */
   async deleteParams(d: Array<string>): Promise<TxResponse> {
     return await this.subscriptionDataContract?.functions.deleteParams(d)
+  }
+  // Admin Functions
+  /**
+   * @remarks
+   * Admin function to get total balances of a particular token
+   * @param t - token address
+   */
+   async getTotalTokenBalance(t: string): Promise<any> {
+    const wei = await this.subscriptionPaymentContract?.functions.getTotalDeposit(t)
+    return this.vendor.convertWeiToEth(wei, this.tokenPrecision || 18)
+  }
+
+  /**
+   * @remarks
+   * Admin function to get the cummulative total of all charges
+   * @param t - token address
+   */
+  async getTotalTokenCharges(t: string): Promise<any> {
+    const wei = await this.subscriptionPaymentContract?.functions.getTotalCharges(t)
+    return this.vendor.convertWeiToEth(wei, this.tokenPrecision || 18)
+  }
+
+  /**
+   * @remarks
+   * Admin function to get the cummulative total of all withdraws made by users
+   * @param t - token address
+   */
+  async getTotalTokenWithdraws(t: string): Promise<any> {
+    const wei = await this.subscriptionPaymentContract?.functions.getTotalWithdraws(t)
+    return this.vendor.convertWeiToEth(wei, this.tokenPrecision || 18)
+  }
+
+  /**
+   * @remarks
+   * Set treasury address to SubscriptionDepay Contract which receives all deposits to the contract
+   * @param t - treasury address
+   */
+  async setTreasury(t: string): Promise<TxResponse> {
+    return await this.subscriptionPaymentContract?.functions.setTreasury(t)
+  }
+
+  /**
+   * @remarks
+   * Set company address to SubscriptionDepay Contract which receives company earnings from user charges
+   * Limited to Admin
+   * @param c - company address
+   */
+  async setCompany(c: string): Promise<TxResponse> {
+    return await this.subscriptionPaymentContract?.functions.setCompany(c)
+  }
+  /**
+    * @remarks
+    * Move company earnings from Treasury to company address
+    * @param t - token address
+    * @param a - amount
+    */
+
+   async companyWithdraw(t: string, a: string): Promise<TxResponse> {
+    const wei = this.vendor.convertToWei(a, this.tokenPrecision || 18)
+    return await this.subscriptionPaymentContract?.functions.companyWithdraw(t, wei)
   }
 }

@@ -113,7 +113,7 @@ export default class extends Deployed {
    * This method can only be called by governance to change price we charge per microsecond for build.
    *
    * @param p - updated price per microsecond.
-
+   * 
    */
   async changeBuildTimeRate(p: string): Promise<TxResponse> {
     const wei = this.vendor.convertToWei(p, this.tokenPrecision || 18)

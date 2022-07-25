@@ -21,39 +21,10 @@ class default_1 extends deployed_1.default {
         super(vendor, constants_1.PAYMENT_ABI, constants_1.ERC20_ABI, constants_1.SUBSCRIPTION_PAYMENT_ABI, constants_1.SUBSCRIPTION_DATA_ABI);
         this.coinMarketCapKey = coinMarketCapKey;
     }
-    paymentWithFee(u, b, d, providerQuote, providerCharged, provider) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            const wei = this.vendor.convertToWei(d, this.tokenPrecision || 18);
-            const buildTime = this.vendor.convertToBN(b);
-            const quote = this.vendor.convertToWei(providerQuote, this.tokenPrecision || 18);
-            const charge = this.vendor.convertToWei(providerCharged, this.tokenPrecision || 18);
-            return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.chargeWithProvider(u, buildTime, wei, quote, charge, provider));
-        });
-    }
-    paymentWithoutFee(a, b) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            const buildTime = this.vendor.convertToBN(b);
-            return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.charge(a, buildTime));
-        });
-    }
-    updateUnderlyingToken(a) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.updateUnderlyingToken(a));
-        });
-    }
     updateEscrow(a) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.updateEscrow(a));
-        });
-    }
-    updateFeederAddress(a) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.updateFeederAddress(a));
         });
     }
     updateStakedToken(a) {
@@ -62,25 +33,12 @@ class default_1 extends deployed_1.default {
             return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.updateStakedToken(a));
         });
     }
-    updateToken(a) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.updateToken(a));
-        });
-    }
     updateDiscountSlabs(d, p) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const discountSlabs = this.vendor.convertStringArrayToBigNumberArray(d);
             const percents = this.vendor.convertStringArrayToBigNumberArray(p);
             return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.updateDiscountSlabs(discountSlabs, percents));
-        });
-    }
-    changeBuildTimeRate(p) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            const wei = this.vendor.convertToWei(p, this.tokenPrecision || 18);
-            return yield ((_a = this.paymentsContract) === null || _a === void 0 ? void 0 : _a.functions.changeBuildTimeRate(wei));
         });
     }
     enableDiscounts(h) {
@@ -163,13 +121,6 @@ class default_1 extends deployed_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const nonce = (yield ((_a = this.erc20Contract) === null || _a === void 0 ? void 0 : _a.functions.getNonce(u)))[0].toNumber();
             return nonce;
-        });
-    }
-    getUserBalance(a) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            const wei = yield ((_a = this.erc20Contract) === null || _a === void 0 ? void 0 : _a.functions.balanceOf(a));
-            return this.vendor.convertWeiToEth(wei, this.tokenPrecision || 18);
         });
     }
     getManagers() {
